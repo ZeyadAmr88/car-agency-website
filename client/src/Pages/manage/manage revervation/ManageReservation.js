@@ -1,5 +1,6 @@
 import react from "react"
 import Table from "react-bootstrap/Table"
+import "../../css/ManageReservation.css"
 import {Link} from "react-router-dom"
 import Alert from "react-bootstrap/Alert"
 const ManageReservation =() => {
