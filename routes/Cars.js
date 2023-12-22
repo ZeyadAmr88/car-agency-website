@@ -1,12 +1,12 @@
-const router = require("express").Router();
-const conn = require("../db/dbConnection");
-const authorized = require("../middleware/authorize");
-const admin = require("../middleware/admin");
+const router                     = require("express").Router();
+const conn                       = require("../db/dbConnection");
+const authorized                 = require("../middleware/authorize");
+const admin                      = require("../middleware/admin");
 const { body, validationResult } = require("express-validator");
-const util = require("util");
-const upload = require("../middleware/uploadimages");
-const fs = require("fs");
-const multer = require("multer");
+const util                       = require("util");
+const upload                     = require("../middleware/uploadimages");
+const fs                         = require("fs");
+const multer                     = require("multer");
 
 const { log, error } = require("console");
 const { query } = require("express");
@@ -162,10 +162,40 @@ router.get("/:id", async (req, res) => {
 
 //review
 
-router.post("/review", (req, res) => {
+router.post("/review",
+authorized,
+body("car_r_id").isNumeric().withMessage("pleasr enter valid car id"),
+body("message").isString().withMessage("pleasr enter valid message"),
+    async(req, res) => {
+        try{
+    const query = util.promisify(conn.query).bind(conn);
+    // VALIDATION REQUEST
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+    //check car exist or no
+    const cars = await query(" select * from car where id = ?", [
+    req.params.id,
+    ]);
+    if(!cars[0]){
+        res.status(404).json({
+            msg:"car not found"
+        });
+    }
+        //prepare car review object
+    const carreview={
+        user_r_id: res.locals.user.id,
+        car_r_id : cars[0].id,
+        message:req.body.message,
+    };
+    await res.query("insert into user_car_review set ?",carreview)
+    }
   res.status(200).json({
-    msg: "review added",
+    msg: "review added successfully",
   });
+}catch(err){
+    res.status(500).json(err)
+}
 });
 
 //favourite
